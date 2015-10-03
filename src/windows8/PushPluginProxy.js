@@ -15,4 +15,4 @@ module.exports = {
         }
     }
 };
-require("cordova/windows8/commandProxy").add("PushPlugin", module.exports);
+require("cordova/exec/proxy").add("PushPlugin", module.exports);
