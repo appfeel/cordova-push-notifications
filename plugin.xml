@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:amazon="http://schemas.android.com/apk/lib/com.amazon.device.ads" xmlns:rim="http://www.blackberry.com/ns/widgets" id="cordova-push-notifications" version="1.1.1">
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" xmlns:amazon="http://schemas.android.com/apk/lib/com.amazon.device.ads" xmlns:rim="http://www.blackberry.com/ns/widgets" id="cordova-push-notifications" version="1.2.0">
 
   <name>Push Notifications Plugin</name>
   <author email="info@appfeel.com" href="https://github.com/appfeel/admob-google-cordova">AppFeel</author>
@@ -50,8 +50,7 @@
       <service android:name="com.plugin.gcm.GCMIntentService" />
     </config-file>
 
-    <dependency id="cordova-android-support-v13" url="https://github.com/appfeel/cordova-plugin-android-support-v13" />
-    <dependency id="cordova-google-play-services" />
+    <framework src="com.google.android.gms:play-services:+" />
 
     <source-file src="src/android/com/plugin/gcm/CordovaGCMBroadcastReceiver.java" target-dir="src/com/plugin/gcm/" />
     <source-file src="src/android/com/plugin/gcm/GCMIntentService.java" target-dir="src/com/plugin/gcm/" />
