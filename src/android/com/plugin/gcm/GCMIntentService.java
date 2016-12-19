@@ -71,8 +71,11 @@ public class GCMIntentService extends IntentService {
         } else {
           extras.putBoolean("foreground", false);
 
-          // Send a notification if there is a message
-          if (extras.getString("message") != null && extras.getString("message").length() != 0) {
+          // Send a notification if there is a message. It can be in notification itself or in gcm.notification.*
+          if ((extras.getString("title") != null && extras.getString("title").length() != 0)
+            || (extras.getString("gcm.notification.title") != null && extras.getString("gcm.notification.title").length() != 0)
+            || (extras.getString("message") != null && extras.getString("message").length() != 0)
+            || (extras.getString("gcm.notification.body") != null && extras.getString("gcm.notification.body").length() != 0)) {
             createNotification(extras);
           }
         }
@@ -85,6 +88,18 @@ public class GCMIntentService extends IntentService {
   public void createNotification(Bundle extras) {
     mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     String appName = getAppName(this);
+    String title = extras.getString("title");
+    String message = extras.getString("message");
+
+    // See if title is in gcm.notification.title
+    if (title == null) {
+      title = extras.getString("gcm.notification.title");
+    }
+
+    // See if message is in gcm.notification.body
+    if (message == null) {
+      message = extras.getString("gcm.notification.body");
+    }
 
     Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
     notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -94,12 +109,11 @@ public class GCMIntentService extends IntentService {
 
     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
     mBuilder.setWhen(System.currentTimeMillis());
-    mBuilder.setContentTitle(extras.getString("title"));
-    mBuilder.setTicker(extras.getString("title"));
+    mBuilder.setContentTitle(title);
+    mBuilder.setTicker(title);
     mBuilder.setContentIntent(contentIntent);
     mBuilder.setAutoCancel(true);
 
-    String message = extras.getString("message");
     if (message != null) {
       mBuilder.setContentText(message);
     } else {
