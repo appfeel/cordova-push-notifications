@@ -1,6 +1,6 @@
 {
   "name": "cordova-push-notifications",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "\n    This plugin allows your application to receive push notifications on Android, iOS, WP8 and Windows8 devices. Android uses Google Cloud Messaging. iOS uses Apple APNS Notifications. WP8 uses Microsoft MPNS Notifications. Windows8 uses Microsoft WNS Notifications.\n  ",
   "cordova": {
     "id": "cordova-push-notifications",
