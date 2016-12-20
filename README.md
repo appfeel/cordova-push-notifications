@@ -16,6 +16,7 @@ This plugin is for use with [Cordova](http://incubator.apache.org/cordova/), and
 
 - [Installation Notes](#instalation_notes)
 - [Plugin API](#plugin_api)
+- [Android background notification configuration](#android_notes)
 - [Testing](#testing)
 - [Additional Resources](#additional_resources)
 - [Acknowledgments](#acknowledgments)
@@ -385,6 +386,7 @@ The toast notification's properties are set explicitly using json. They can be g
 
 
 To control the launch page when the user taps on your toast notification when the app is not running, add the following code to your mainpage.xaml.cs
+
 ```cs
 protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventArgs e)
 {
@@ -401,6 +403,7 @@ protected override void OnNavigatedTo(System.Windows.Navigation.NavigationEventA
     }
 }
 ```
+
 Or you can add another `Page2.xaml` just for testing toast navigate url. Like the [MSDN Toast Sample](http://msdn.microsoft.com/en-us/library/windowsphone/develop/hh202967(v=vs.105).aspx)
 
 To test the tile notification, you will need to add tile images like the [MSDN Tile Sample](http://msdn.microsoft.com/en-us/library/windowsphone/develop/hh202970(v=vs.105).aspx#BKMK_CreatingaPushClienttoReceiveTileNotifications)
@@ -477,7 +480,29 @@ function errorHandler(error) {
     console.log('error###' + error);
 }
 ```
+
 See [Sending push notifications with WNS](http://msdn.microsoft.com/en-us/library/windows/apps/hh465460.aspx) to send test push notification.
+
+
+##<a name="android_notes"></a> Android background notification configuration
+
+You can specify the following options in custom data, in order to customize notification in tray when app is in background:
+
+- `title`: title of the notification (if not present will be looked at `gcm.notification.title`, otherwise will set to empty title)
+- `message`: message of the notification (if not present, will be looked at `body`, then `gcm.notification.body` and if not set will default to `"<missing message content>"`)
+- `autoCancel`: auto cancel notification when opened. **Be careful!** at this moment there is no way to cancel it from javascript
+- `bigview`: use big view for notification
+- `icon`: the name of the icon that will be used (defaults to app icon). **Important:** it must be transparent and will be converted to white only picture (default Android behaviour)
+- `iconLocation`: where is located the icon inside `res` folder (defaults to `"drawable"`, so the icon will be obtained from `res/drawable/${icon}`)
+- `iconColor`: the color to use as icon background in notification the tray
+- `defaults`: int value notification mode (defaults to `Notification.DEFAULT_ALL`: vibrate, sound and led)
+- `sound`: name of the custom sound to play when notification is received (otherwise system sound will be played)
+- `soundLocation`: same as `iconLocation` for sound (def. "sounds")
+- `ledColor`: argb/rgb string for led light color
+- `ledOnMs`: time in ms that the led will be on (def. 500)
+- `ledOffMs`: time in ms that led will be off (def. 500)
+- `msgcnt`: set the large number at the right-hand side of the notification
+- `notId`: the notification id (to not create a new notification if old one is already on tray)
 
 
 
@@ -610,6 +635,7 @@ Props to [Tobias Hößl](https://github.com/CatoTH), who provided the code to su
 
 ##<a name="license"></a> LICENSE
 
+```
 	The MIT License
 
 	Copyright (c) 2012 Adobe Systems, inc.
@@ -633,3 +659,4 @@ Props to [Tobias Hößl](https://github.com/CatoTH), who provided the code to su
 	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 	THE SOFTWARE.
+```

@@ -21,8 +21,6 @@ import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class GCMIntentService extends IntentService {
   public static int NOTIFICATION_ID = 1;
-  private NotificationManager mNotificationManager;
-  NotificationCompat.Builder builder;
 
   //private static final String TAG = "GCMIntentService";
 
@@ -70,12 +68,13 @@ public class GCMIntentService extends IntentService {
           PushPlugin.sendExtras(extras);
         } else {
           extras.putBoolean("foreground", false);
-
+          String title = extras.getString("title");
+          String message = extras.getString("message");
+          title = title != null ? title : extras.getString("gcm.notification.title");
+          message = message != null ? message : extras.getString("body");
+          message = message != null ? message : extras.getString("gcm.notification.body");
           // Send a notification if there is a message. It can be in notification itself or in gcm.notification.*
-          if ((extras.getString("title") != null && extras.getString("title").length() != 0)
-            || (extras.getString("gcm.notification.title") != null && extras.getString("gcm.notification.title").length() != 0)
-            || (extras.getString("message") != null && extras.getString("message").length() != 0)
-            || (extras.getString("gcm.notification.body") != null && extras.getString("gcm.notification.body").length() != 0)) {
+          if ((title != null && title.length() != 0) || (message != null && message.length() != 0)) {
             createNotification(extras);
           }
         }
@@ -86,20 +85,9 @@ public class GCMIntentService extends IntentService {
   }
 
   public void createNotification(Bundle extras) {
-    mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     String appName = getAppName(this);
-    String title = extras.getString("title");
-    String message = extras.getString("message");
 
-    // See if title is in gcm.notification.title
-    if (title == null) {
-      title = extras.getString("gcm.notification.title");
-    }
-
-    // See if message is in gcm.notification.body
-    if (message == null) {
-      message = extras.getString("gcm.notification.body");
-    }
 
     Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
     notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -109,72 +97,146 @@ public class GCMIntentService extends IntentService {
 
     NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
     mBuilder.setWhen(System.currentTimeMillis());
+    mBuilder.setContentIntent(contentIntent);
+
+    // AUTOCANCEL
+    String autoCancel = extras.getString("autoCancel");
+    autoCancel = autoCancel != null ? autoCancel : "true";
+    mBuilder.setAutoCancel(autoCancel.equals("true"));
+
+    // TITLE
+    String title = extras.getString("title");
+    title = title != null ? title : extras.getString("gcm.notification.title");
     mBuilder.setContentTitle(title);
     mBuilder.setTicker(title);
-    mBuilder.setContentIntent(contentIntent);
-    mBuilder.setAutoCancel(true);
 
-    if (message != null) {
-      mBuilder.setContentText(message);
-    } else {
-      mBuilder.setContentText("<missing message content>");
-    }
+    // MESSAGE
+    String message = extras.getString("message");
+    message = message != null ? message : extras.getString("gcm.notification.body");
+    message = message != null ? message : "<missing message content>";
+    mBuilder.setContentText(message);
 
+    // BIG VIEW
     if (extras.containsKey("bigview")) {
-      boolean bigview = Boolean.parseBoolean(extras.getString("bigview"));
-      if (bigview) {
+      boolean bigView = Boolean.parseBoolean(extras.getString("bigview"));
+      if (bigView) {
         mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(message));
       }
     }
 
-    String smallIconResName = extras.getString("smallIconResName");
-    if (smallIconResName != null) {
-      mBuilder.setSmallIcon(this.getResources().getIdentifier(smallIconResName, null, null));
-    } else {
+    // SMALL ICON
+    String icon = extras.getString("icon");
+    if (icon == null) {
       mBuilder.setSmallIcon(this.getApplicationInfo().icon);
+    } else {
+      String location = extras.getString("iconLocation");
+      location = location != null ? location : "drawable";
+      int rIcon = this.getResources().getIdentifier(icon.substring(0, icon.lastIndexOf('.')), location, this.getPackageName());
+      if (rIcon > 0) {
+        mBuilder.setSmallIcon(rIcon);
+      } else {
+        mBuilder.setSmallIcon(this.getApplicationInfo().icon);
+      }
     }
 
+    // ICON COLOR #RRGGBB or #AARRGGBB
+    String iconColor = extras.getString("iconColor");
+    if (iconColor != null) {
+      mBuilder.setColor(Color.parseColor(iconColor));
+    }
+
+    // LARGE ICON
+    // TODO: http://stackoverflow.com/questions/24840282/load-image-from-url-in-notification-android
+    //    String image = extras.getString("image");
+    //    Bitmap largeIcon;
+    //    if (image != null) {
+    //      if (image.startsWith("http")) {
+    //        largeIcon = getBitmapFromURL(image);
+    //      } else {
+    //        //will play /platform/android/res/raw/image
+    //        largeIcon = BitmapFactory.decodeResource(getResources(), this.getResources().getIdentifier(image, null, null));
+    //      }
+    //
+    //      if (largeIcon != null) {
+    //        mBuilder.setLargeIcon(largeIcon);
+    //      }
+    //    }
+
+    // DEFAULTS (LIGHT, SOUND, VIBRATE)
     int defaults = Notification.DEFAULT_ALL;
     if (extras.getString("defaults") != null) {
       try {
         defaults = Integer.parseInt(extras.getString("defaults"));
       } catch (NumberFormatException e) {
+        defaults = Notification.DEFAULT_ALL;
       }
     }
     mBuilder.setDefaults(defaults);
 
+    // SOUND (from /platform/android/res/raw/sound)
     String soundName = extras.getString("sound");
     if (soundName != null) {
-      //will play /platform/android/res/raw/soundName
+      String location = extras.getString("soundLocation");
+      location = location != null ? location : "sounds";
       soundName = soundName.substring(0, soundName.lastIndexOf('.'));
       Resources r = getResources();
-      int resourceId = r.getIdentifier(soundName, "raw", this.getPackageName());
+      int resourceId = r.getIdentifier(soundName, location, this.getPackageName());
       Uri soundUri = Uri.parse("android.resource://" + this.getPackageName() + "/" + resourceId);
       mBuilder.setSound(soundUri);
     }
 
-    // turn on the ligths
-    String ledLight = extras.getString("led");
-    if (ledLight != null) {
-      mBuilder.setLights(Color.argb(0, 255, 0, 0), 500, 500);
+    // LIGHTS
+    String ledColor = extras.getString("ledColor");
+    if (ledColor != null) {
+      String sLedOn = extras.getString("ledOnMs");
+      String sLedOff = extras.getString("ledOffMs");
+      int ledOn = 500;
+      int ledOff = 500;
+
+      if (sLedOn != null) {
+        try {
+          ledOn = Integer.parseInt(sLedOn);
+        } catch (NumberFormatException e) {
+          ledOn = 500;
+        }
+      }
+      if (sLedOff != null) {
+        try {
+          ledOff = Integer.parseInt(sLedOff);
+        } catch (NumberFormatException e) {
+          ledOff = 500;
+        }
+      }
+      mBuilder.setLights(Color.parseColor(ledColor), ledOn, ledOff);
     }
 
-    String msgcnt = extras.getString("msgcnt");
-    if (msgcnt != null) {
-      mBuilder.setNumber(Integer.parseInt(msgcnt));
+    // MESSAGE COUNT
+    String msgCnt = extras.getString("msgcnt");
+    if (msgCnt != null) {
+      mBuilder.setNumber(Integer.parseInt(msgCnt));
     }
 
     try {
-      int notId = Integer.parseInt(extras.getString("notId"));
-      NOTIFICATION_ID = notId;
+      NOTIFICATION_ID = Integer.parseInt(extras.getString("notId"));
     } catch (NumberFormatException e) {
       NOTIFICATION_ID += 1;
     } catch (Exception e) {
       NOTIFICATION_ID += 1;
     }
 
-    mNotificationManager.notify((String) appName, NOTIFICATION_ID, mBuilder.build());
+    mNotificationManager.notify(appName, NOTIFICATION_ID, mBuilder.build());
   }
+
+  //  private Bitmap getBitmapFromURL(String src) {
+  //    Bitmap image = null;
+  //    try {
+  //      URL url = new URL(src);
+  //      image = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+  //    } catch(IOException e) {
+  //      System.out.println(e);
+  //    }
+  //    return image;
+  //  }
 
   private static String getAppName(Context context) {
     CharSequence appName = context.getPackageManager().getApplicationLabel(context.getApplicationInfo());
@@ -193,7 +255,7 @@ public class GCMIntentService extends IntentService {
     // it should never cause a device wakeup.  We're also at SDK 19 preferred, so the alarm
     // mgr set algorithm is better on memory consumption which is good.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      // A restart intent - this never changes...        
+      // A restart intent - this never changes...
       final Intent restartIntent = new Intent(this, GCMIntentService.class);
       final AlarmManager alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
       restartIntent.putExtra("ALARM_RESTART_SERVICE_DIED", true);
