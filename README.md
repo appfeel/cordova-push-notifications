@@ -60,7 +60,7 @@ The plugin can be installed via the Cordova command line interface:
 1) Navigate to the root folder for your phonegap project. 2) Run the command.
 
 ```sh
-cordova plugin add com.notifications.push
+cordova plugin add cordova-push-notifications
 ```
 
 ### Phonegap
@@ -70,7 +70,7 @@ The plugin can be installed using the Phonegap command line interface:
 1) Navigate to the root folder for your phonegap project. 2) Run the command.
 
 ```sh
-phonegap local plugin add com.notifications.push
+phonegap local plugin add cordova-push-notifications
 ```
 
 ### Plugman
