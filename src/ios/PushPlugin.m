@@ -288,10 +288,13 @@
 - (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
   
   NSMutableDictionary *results = [NSMutableDictionary dictionary];
-  NSString *token = [[[[deviceToken description] stringByReplacingOccurrencesOfString:@"<"withString:@""]
-                      stringByReplacingOccurrencesOfString:@">" withString:@""]
-                     stringByReplacingOccurrencesOfString: @" " withString: @""];
-  [results setValue:token forKey:@"deviceToken"];
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+    NSString *token = [self hexadecimalStringFromData:deviceToken];
+#else
+    NSString *token = [[[[deviceToken description] stringByReplacingOccurrencesOfString:@"<"withString:@""]	    NSString *token = [[[[deviceToken description] stringByReplacingOccurrencesOfString:@"<"withString:@""]
+                        stringByReplacingOccurrencesOfString:@">" withString:@""]	                        stringByReplacingOccurrencesOfString:@">" withString:@""]
+                       stringByReplacingOccurrencesOfString: @" " withString: @""];	                       stringByReplacingOccurrencesOfString: @" " withString: @""];
+#endif
   
 #if !TARGET_IPHONE_SIMULATOR
   // Get Bundle Info for Remote Registration (handy if you have more than one app)
@@ -341,6 +344,21 @@
   
     [self successWithMessage:[NSString stringWithFormat:@"%@", token]];
 #endif
+}
+
+- (NSString *)hexadecimalStringFromData:(NSData *)data
+{
+    NSUInteger dataLength = data.length;
+    if (dataLength == 0) {
+        return nil;
+    }
+
+    const unsigned char *dataBuffer = data.bytes;
+    NSMutableString *hexString  = [NSMutableString stringWithCapacity:(dataLength * 2)];
+    for (int i = 0; i < dataLength; ++i) {
+        [hexString appendFormat:@"%02x", dataBuffer[i]];
+    }
+    return [hexString copy];
 }
 
 - (void)didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
